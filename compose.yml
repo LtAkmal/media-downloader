@@ -1,0 +1,24 @@
+# Media Downloader (yt-dlp + ffmpeg). Open http://<host>:18096 on your LAN.
+# For a public site, put it behind a reverse proxy that adds "X-Ytdl-Public: 1" (see deploy/nginx-public.conf).
+name: media-downloader
+services:
+  media-downloader:
+    build: .
+    image: media-downloader:1
+    container_name: media-downloader
+    network_mode: host
+    restart: unless-stopped
+    environment:
+      - TZ=Asia/Jakarta
+      - PORT=18096
+      - DATA_DIR=/data
+      - KEEP_HOURS=24          # LAN jobs
+      - MAX_PARALLEL=2         # downloads running at the same time (others wait in the queue)
+      - PUBLIC_KEEP_HOURS=3    # public visitors' files
+      - PUBLIC_MAX_ACTIVE=2
+      - PUBLIC_MAX_SECONDS=10800
+      - PUBLIC_MAX_FILESIZE=2G
+      - PUBLIC_MAX_ITEMS=20
+    volumes:
+      - ./app:/app:ro
+      - ./data:/data

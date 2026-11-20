@@ -1,0 +1,487 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Media Downloader</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23e5484d'/%3E%3Cpath d='M16 7v12m-5-5 5 5 5-5M9 24h14' stroke='white' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#f6f6f4;--panel:#fff;--panel2:#f1f1ee;--line:#e2e1dc;--text:#1b1b19;--muted:#6d6c66;
+  --accent:#d63f45;--accent-ink:#fff;--accent-soft:#fbe9e9;--ok:#1f8a4c;--ok-soft:#e3f4ea;
+  --warn:#9a6700;--err:#c4282f;--err-soft:#fdeaea;--ring:rgba(214,63,69,.35);
+  --shadow:0 1px 2px rgba(0,0,0,.05),0 4px 16px rgba(0,0,0,.04);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121212;--panel:#1b1b1a;--panel2:#242422;--line:#323230;--text:#ececea;--muted:#9c9b95;
+  --accent:#f0585d;--accent-ink:#fff;--accent-soft:#3a1d1f;--ok:#43c47a;--ok-soft:#173323;
+  --warn:#e0b04a;--err:#ff6b70;--err-soft:#3a1b1c;--ring:rgba(240,88,93,.4);
+  --shadow:0 1px 2px rgba(0,0,0,.4);
+}}
+:root[data-theme="dark"]{
+  --bg:#121212;--panel:#1b1b1a;--panel2:#242422;--line:#323230;--text:#ececea;--muted:#9c9b95;
+  --accent:#f0585d;--accent-ink:#fff;--accent-soft:#3a1d1f;--ok:#43c47a;--ok-soft:#173323;
+  --warn:#e0b04a;--err:#ff6b70;--err-soft:#3a1b1c;--ring:rgba(240,88,93,.4);
+  --shadow:0 1px 2px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:1040px;margin:0 auto;padding:28px 16px 64px}
+header{display:flex;align-items:center;gap:12px;margin-bottom:22px}
+.logo{width:36px;height:36px;border-radius:10px;background:var(--accent);display:grid;place-items:center;flex:none}
+h1{font-size:20px;margin:0;letter-spacing:-.01em}
+header p{margin:0;color:var(--muted);font-size:13px}
+header .sp{flex:1}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:18px}
+.card+.card,.card+section,section+section{margin-top:16px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+input[type=text],input[type=url],select{font:inherit;color:var(--text);background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-width:0}
+input:focus,select:focus,button:focus-visible{outline:none;box-shadow:0 0 0 3px var(--ring);border-color:var(--accent)}
+#url{flex:1 1 320px;font-size:16px;padding:12px 14px}
+button{font:inherit;cursor:pointer;border-radius:10px;border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:10px 14px;white-space:nowrap}
+button:hover{border-color:var(--muted)}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+button.primary:hover{filter:brightness(1.05)}
+button:disabled{opacity:.55;cursor:default}
+button.sm{padding:5px 10px;font-size:13px;border-radius:8px}
+button.ghost{background:transparent}
+.chk{display:inline-flex;align-items:center;gap:7px;font-size:14px;cursor:pointer;user-select:none}
+.chk input{accent-color:var(--accent);width:16px;height:16px}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.err{background:var(--err-soft);color:var(--err);border-radius:10px;padding:10px 12px;font-size:14px;margin-top:12px;word-break:break-word}
+.hidden{display:none!important}
+.info{display:grid;grid-template-columns:240px 1fr;gap:18px}
+.thumb{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:10px;background:var(--panel2);display:block}
+.info h2{margin:0 0 4px;font-size:18px;line-height:1.35}
+.meta{color:var(--muted);font-size:13px;display:flex;gap:6px 14px;flex-wrap:wrap}
+.tabs{display:inline-flex;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:3px;margin:16px 0 4px}
+.tabs button{border:0;background:transparent;padding:8px 18px;border-radius:9px;font-weight:600;color:var(--muted)}
+.tabs button.on{background:var(--panel);color:var(--text);box-shadow:var(--shadow)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px 14px;margin-top:14px}
+label.f{display:flex;flex-direction:column;gap:5px;font-size:13px;color:var(--muted)}
+label.f select,label.f input{width:100%}
+.checks{display:flex;flex-wrap:wrap;gap:10px 20px;margin-top:14px}
+details{margin-top:16px;border-top:1px solid var(--line);padding-top:12px}
+summary{cursor:pointer;font-weight:600;font-size:14px;list-style:none;display:flex;align-items:center;gap:8px}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"";width:7px;height:7px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(-45deg);transition:transform .15s}
+details[open]>summary::before{transform:rotate(45deg)}
+.pill{display:inline-flex;align-items:center;gap:6px;background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:3px 10px;font-size:13px;font-weight:600}
+.pill button{border:0;background:transparent;color:inherit;padding:0 2px;font-size:15px;line-height:1}
+.go{display:flex;align-items:center;gap:14px;margin-top:18px;flex-wrap:wrap}
+.go .primary{padding:12px 22px;font-size:16px}
+.summary{color:var(--muted);font-size:13px}
+.tbl-wrap{overflow:auto;max-height:420px;border:1px solid var(--line);border-radius:10px;margin-top:10px}
+table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}
+th,td{padding:7px 10px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--line)}
+th{position:sticky;top:0;background:var(--panel2);font-weight:600;color:var(--muted);z-index:1}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--panel2)}
+tbody tr.sel{background:var(--accent-soft)}
+.tag{display:inline-block;font-size:11px;font-weight:700;padding:1px 6px;border-radius:5px;background:var(--panel2);border:1px solid var(--line);color:var(--muted)}
+.tag.av{color:var(--ok);border-color:var(--ok)}
+.tag.a{color:var(--accent);border-color:var(--accent)}
+.ftabs{display:flex;gap:6px;flex-wrap:wrap}
+.ftabs button.on{background:var(--text);color:var(--bg);border-color:var(--text)}
+.plist{max-height:220px;overflow:auto;margin:10px 0 0;padding:0;list-style:none;font-size:13px;border:1px solid var(--line);border-radius:10px}
+.plist li{display:flex;gap:10px;padding:6px 10px;border-bottom:1px solid var(--line)}
+.plist li span:first-child{color:var(--muted);width:34px;flex:none;text-align:right;font-variant-numeric:tabular-nums}
+.plist li span:nth-child(2){flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sec-h{display:flex;align-items:center;gap:10px;margin:26px 0 10px}
+.sec-h h3{margin:0;font-size:16px}
+.job{display:grid;grid-template-columns:96px 1fr auto;gap:14px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.job+.job{margin-top:10px}
+.job img{width:96px;aspect-ratio:16/9;object-fit:cover;border-radius:8px;background:var(--panel2)}
+.job .t{font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.job .s{font-size:12.5px;color:var(--muted);display:flex;gap:4px 12px;flex-wrap:wrap;margin-top:2px}
+.bar{height:6px;border-radius:99px;background:var(--panel2);overflow:hidden;margin-top:8px}
+.bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .4s}
+.job.done .bar i{background:var(--ok)}
+.job.error .bar i{background:var(--err)}
+.job .acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.job .e{color:var(--err);font-size:12.5px;margin-top:4px;word-break:break-word}
+a.btn{display:inline-block;text-decoration:none;font-weight:600;background:var(--ok);color:#fff;border-radius:8px;padding:5px 12px;font-size:13px}
+.st{font-weight:600}
+.st.done{color:var(--ok)}.st.error{color:var(--err)}.st.running{color:var(--accent)}
+pre.log{background:var(--panel2);border-radius:8px;padding:10px;font-size:12px;max-height:260px;overflow:auto;white-space:pre-wrap;word-break:break-all;grid-column:1/-1;margin:0}
+footer{margin-top:36px;color:var(--muted);font-size:12.5px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.spin{width:16px;height:16px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;display:inline-block;animation:sp .7s linear infinite;vertical-align:-3px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.empty{color:var(--muted);font-size:14px;padding:18px;text-align:center;border:1px dashed var(--line);border-radius:12px}
+@media (max-width:680px){
+  .info{grid-template-columns:1fr}
+  .job{grid-template-columns:64px 1fr}
+  .job img{width:64px}
+  .job .acts{grid-column:1/-1;justify-content:flex-start}
+  .tabs{display:flex}.tabs button{flex:1}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m-5-5 5 5 5-5M5 20h14"/></svg></div>
+    <div><h1>Media Downloader</h1><p>YouTube &amp; situs lain · video, audio, playlist</p></div>
+    <div class="sp"></div>
+    <button class="sm ghost" id="themeBtn" title="Ganti tema">Tema</button>
+  </header>
+
+  <div class="card">
+    <form class="row" id="urlForm">
+      <input type="url" id="url" placeholder="Tempel link YouTube / playlist / situs lain di sini" autocomplete="off" required>
+      <button type="button" id="pasteBtn" title="Tempel dari clipboard">Tempel</button>
+      <button class="primary" id="infoBtn">Cek link</button>
+    </form>
+    <div class="row" style="margin-top:10px">
+      <label class="chk hidden" id="plWrap"><input type="checkbox" id="plChk"> Link ini bagian dari playlist, ambil seluruh playlist</label>
+    </div>
+    <div class="err hidden" id="infoErr"></div>
+  </div>
+
+  <section class="card hidden" id="infoCard">
+    <div class="info">
+      <img class="thumb" id="iThumb" alt="" referrerpolicy="no-referrer">
+      <div>
+        <h2 id="iTitle"></h2>
+        <div class="meta" id="iMeta"></div>
+        <ul class="plist hidden" id="iList"></ul>
+        <div class="tabs" role="tablist">
+          <button type="button" data-mode="video" class="on">Video</button>
+          <button type="button" data-mode="audio">Audio saja</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIDEO -->
+    <div id="optVideo">
+      <div class="grid">
+        <label class="f">Kualitas<select id="vHeight"></select></label>
+        <label class="f">Container / format<select id="vCont">
+          <option value="mp4">MP4 (paling kompatibel)</option>
+          <option value="mkv">MKV (semua codec, tanpa konversi)</option>
+          <option value="webm">WEBM</option>
+          <option value="mov">MOV</option>
+          <option value="avi">AVI (re-encode)</option>
+          <option value="flv">FLV (re-encode)</option>
+        </select></label>
+        <label class="f">Codec video<select id="vCodec">
+          <option value="">Otomatis (terbaik)</option>
+          <option value="h264">H.264 / AVC (paling kompatibel)</option>
+          <option value="vp9">VP9</option>
+          <option value="av1">AV1 (paling hemat ukuran)</option>
+          <option value="h265">H.265 / HEVC</option>
+        </select></label>
+        <label class="f">Frame rate<select id="vFps">
+          <option value="">Otomatis (tertinggi)</option>
+          <option value="60">Utamakan 60 fps</option>
+          <option value="30">Maksimal 30 fps</option>
+        </select></label>
+      </div>
+      <div class="checks">
+        <label class="chk"><input type="checkbox" id="vMeta" checked> Tulis metadata</label>
+        <label class="chk"><input type="checkbox" id="vChap" checked> Chapter</label>
+        <label class="chk"><input type="checkbox" id="vThumb"> Tempel thumbnail</label>
+        <label class="chk"><input type="checkbox" id="vRecode"> Paksa re-encode (lambat, untuk TV/HP lama)</label>
+      </div>
+    </div>
+
+    <!-- AUDIO -->
+    <div id="optAudio" class="hidden">
+      <div class="grid">
+        <label class="f">Format audio<select id="aFmt">
+          <option value="mp3">MP3</option>
+          <option value="m4a">M4A (AAC)</option>
+          <option value="aac">AAC (raw)</option>
+          <option value="opus">OPUS</option>
+          <option value="vorbis">OGG (Vorbis)</option>
+          <option value="flac">FLAC (lossless container)</option>
+          <option value="wav">WAV</option>
+          <option value="alac">ALAC (Apple lossless)</option>
+          <option value="best">Asli, tanpa konversi</option>
+        </select></label>
+        <label class="f" id="aQualWrap">Bitrate<select id="aQual">
+          <option value="320K">320 kbps</option>
+          <option value="256K">256 kbps</option>
+          <option value="192K" selected>192 kbps</option>
+          <option value="160K">160 kbps</option>
+          <option value="128K">128 kbps</option>
+          <option value="96K">96 kbps</option>
+          <option value="64K">64 kbps</option>
+          <option value="0">VBR kualitas terbaik</option>
+          <option value="5">VBR sedang</option>
+        </select></label>
+        <label class="f">Sample rate<select id="aRate">
+          <option value="">Ikuti sumber</option>
+          <option value="44100">44.1 kHz</option>
+          <option value="48000">48 kHz</option>
+        </select></label>
+      </div>
+      <div class="checks">
+        <label class="chk"><input type="checkbox" id="aThumb" checked> Cover art dari thumbnail</label>
+        <label class="chk"><input type="checkbox" id="aMeta" checked> Tag judul/artis</label>
+        <label class="chk"><input type="checkbox" id="aSplit"> Pecah per chapter (1 file per lagu)</label>
+      </div>
+      <p class="small muted" id="aNote" style="margin:10px 0 0"></p>
+    </div>
+
+    <details id="adv">
+      <summary>Opsi lanjutan</summary>
+      <div class="grid">
+        <label class="f">Potong mulai<input type="text" id="tStart" placeholder="contoh 1:30"></label>
+        <label class="f">Potong sampai<input type="text" id="tEnd" placeholder="contoh 3:45"></label>
+        <label class="f">Subtitle<select id="subs">
+          <option value="none">Tidak ada</option>
+          <option value="embed">Tempel ke video</option>
+          <option value="file">File .srt terpisah</option>
+        </select></label>
+        <label class="f">Bahasa subtitle<input type="text" id="subLangs" value="id.*,en.*"></label>
+        <label class="f">Limit kecepatan<input type="text" id="rate" placeholder="kosong = bebas, contoh 5M"></label>
+        <label class="f hidden" id="itemsWrap">Item playlist<input type="text" id="items" placeholder="semua, atau 1-10,15"></label>
+      </div>
+      <div class="checks">
+        <label class="chk"><input type="checkbox" id="autoSubs"> Pakai subtitle otomatis kalau tidak ada</label>
+        <label class="chk"><input type="checkbox" id="precise"> Potong presisi (re-encode bagian potongan)</label>
+      </div>
+      <p class="small" style="margin:14px 0 6px;font-weight:600">SponsorBlock: buang segmen</p>
+      <div class="checks" style="margin-top:0" id="sbBox">
+        <label class="chk"><input type="checkbox" value="music_offtopic"> Bagian non-musik (di video musik)</label>
+        <label class="chk"><input type="checkbox" value="sponsor"> Sponsor</label>
+        <label class="chk"><input type="checkbox" value="selfpromo"> Promosi diri</label>
+        <label class="chk"><input type="checkbox" value="intro"> Intro</label>
+        <label class="chk"><input type="checkbox" value="outro"> Outro</label>
+        <label class="chk"><input type="checkbox" value="interaction"> Ajakan subscribe</label>
+      </div>
+    </details>
+
+    <details id="fmtDetails">
+      <summary>Format lengkap dari sumber <span class="muted small" id="fmtCount"></span></summary>
+      <p class="small muted" style="margin:8px 0">Klik baris untuk pilih format tertentu secara manual. Format video-tanpa-audio otomatis digabung dengan audio terbaik.</p>
+      <div class="ftabs" id="fTabs">
+        <button type="button" class="sm on" data-k="all">Semua</button>
+        <button type="button" class="sm" data-k="av">Video + audio</button>
+        <button type="button" class="sm" data-k="video">Video saja</button>
+        <button type="button" class="sm" data-k="audio">Audio saja</button>
+      </div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>ID</th><th>Jenis</th><th>Ext</th><th>Resolusi</th><th>FPS</th><th>Video</th><th>Audio</th><th>Bitrate</th><th>Ukuran</th><th>Catatan</th></tr></thead>
+        <tbody id="fBody"></tbody>
+      </table></div>
+    </details>
+
+    <div class="go">
+      <button class="primary" id="dlBtn">Download</button>
+      <span class="pill hidden" id="manualPill">Format manual: <b id="manualId"></b><button type="button" id="manualClear" title="Batalkan">×</button></span>
+      <span class="summary" id="summary"></span>
+    </div>
+    <div class="err hidden" id="dlErr"></div>
+  </section>
+
+  <div class="sec-h">
+    <h3>Antrean &amp; hasil</h3>
+    <span class="sp" style="flex:1"></span>
+    <label class="chk small"><input type="checkbox" id="autoSave" checked> Simpan otomatis saat selesai</label>
+    <button class="sm" id="clearBtn">Bersihkan yang selesai</button>
+  </div>
+  <div id="jobs"><div class="empty">Belum ada download.</div></div>
+
+  <footer>
+    <span id="ver">yt-dlp …</span>
+    <button class="sm hidden" id="updBtn">Update yt-dlp</button>
+    <span id="keep"></span>
+  </footer>
+</div>
+
+<script>
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+let info = null, mode = 'video', manual = null, fKind = 'all';
+const store = {get(k,d){try{const v=localStorage.getItem(k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+               set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+
+// theme
+function applyTheme(t){ if(t) document.documentElement.dataset.theme=t; else delete document.documentElement.dataset.theme; }
+applyTheme(store.get('theme',null));
+$('#themeBtn').onclick=()=>{const cur=document.documentElement.dataset.theme||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');const n=cur==='dark'?'light':'dark';applyTheme(n);store.set('theme',n)};
+
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const dur = s => { if(!s && s!==0) return ''; s=Math.round(s); const h=s/3600|0,m=(s%3600)/60|0,x=s%60; return (h?h+':'+String(m).padStart(2,'0'):m)+':'+String(x).padStart(2,'0'); };
+const size = b => { if(!b) return ''; const u=['B','KB','MB','GB','TB']; let i=0; while(b>=1024&&i<4){b/=1024;i++} return b.toFixed(b<10&&i?1:0)+' '+u[i]; };
+async function api(path, body){
+  const r = await fetch(path, body===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const j = await r.json().catch(()=>({error:'Respon server tidak valid ('+r.status+')'}));
+  if(!r.ok || j.error && !Array.isArray(j)) throw new Error(j.error||('HTTP '+r.status));
+  return j;
+}
+function showErr(el,msg){ el.textContent=msg; el.classList.toggle('hidden',!msg); }
+
+// remember options
+const OPT_IDS=['vHeight','vCont','vCodec','vFps','vMeta','vChap','vThumb','vRecode','aFmt','aQual','aRate','aThumb','aMeta','aSplit','subs','subLangs','autoSubs','precise','rate','autoSave'];
+const saved=store.get('opts',{});
+function restoreOpts(){ for(const id of OPT_IDS){ const el=$('#'+id); if(!el||!(id in saved)) continue; if(el.type==='checkbox') el.checked=saved[id]; else if(el.tagName!=='SELECT'||[...el.options].some(o=>o.value==saved[id])) el.value=saved[id]; } if(saved.mode) setMode(saved.mode,true); $$('#sbBox input').forEach(c=>c.checked=(saved.sb||[]).includes(c.value)); }
+function persist(){ const o={mode,sb:$$('#sbBox input:checked').map(c=>c.value)}; for(const id of OPT_IDS){const el=$('#'+id); if(el) o[id]=el.type==='checkbox'?el.checked:el.value;} store.set('opts',o); }
+document.addEventListener('change',e=>{ if(e.target.closest('#infoCard')||e.target.id==='autoSave'){persist();updSummary();} });
+
+// url
+$('#url').addEventListener('input',()=>{ const u=$('#url').value; const pl=/[?&]list=/.test(u); $('#plWrap').classList.toggle('hidden',!pl||/\/playlist\?/.test(u)); });
+$('#pasteBtn').onclick=async()=>{ try{ const t=await navigator.clipboard.readText(); if(t){ $('#url').value=t.trim(); $('#url').dispatchEvent(new Event('input')); getInfo(); } }catch(e){ $('#url').focus(); showErr($('#infoErr'),'Browser nggak ngizinin baca clipboard (butuh HTTPS). Tempel manual pakai Ctrl+V.'); } };
+$('#urlForm').onsubmit=e=>{ e.preventDefault(); getInfo(); };
+$('#plChk').onchange=()=>{ if(info) getInfo(); };
+
+async function getInfo(){
+  const url=$('#url').value.trim(); if(!url) return;
+  const btn=$('#infoBtn'); btn.disabled=true; btn.innerHTML='<span class="spin"></span> Mengecek…';
+  showErr($('#infoErr'),''); showErr($('#dlErr'),'');
+  const playlist=/\/playlist\?/.test(url)||$('#plChk').checked;
+  try{ info=await api('/api/info',{url,playlist}); info.playlist=info.is_playlist; renderInfo(); }
+  catch(e){ showErr($('#infoErr'),e.message); $('#infoCard').classList.add('hidden'); info=null; }
+  finally{ btn.disabled=false; btn.textContent='Cek link'; }
+}
+
+function renderInfo(){
+  manual=null; updManual();
+  $('#infoCard').classList.remove('hidden');
+  $('#iThumb').src=info.thumbnail||''; $('#iThumb').classList.toggle('hidden',!info.thumbnail);
+  $('#iTitle').textContent=info.title||info.url;
+  const m=[];
+  if(info.uploader) m.push(esc(info.uploader));
+  if(info.is_playlist) m.push('Playlist · '+info.count+' video');
+  else { if(info.duration) m.push(dur(info.duration)); if(info.view_count) m.push(info.view_count.toLocaleString('id-ID')+' views');
+    if(info.upload_date) m.push(info.upload_date.replace(/(\d{4})(\d\d)(\d\d)/,'$3/$2/$1')); if(info.heights&&info.heights.length) m.push('maks '+info.heights[0]+'p');
+    if(info.chapters) m.push(info.chapters+' chapter'); }
+  if(info.extractor && info.extractor!=='Youtube' && info.extractor!=='YoutubeTab') m.push(esc(info.extractor));
+  if(info.is_live) m.push('<b style="color:var(--accent)">LIVE</b>');
+  $('#iMeta').innerHTML=m.map(x=>'<span>'+x+'</span>').join('');
+  // playlist list
+  const L=$('#iList'); L.classList.toggle('hidden',!info.is_playlist);
+  if(info.is_playlist) L.innerHTML=info.entries.map((e,i)=>`<li><span>${i+1}</span><span>${esc(e.title||e.id)}</span><span class="muted">${dur(e.duration)}</span></li>`).join('');
+  $('#itemsWrap').classList.toggle('hidden',!info.is_playlist);
+  $('#fmtDetails').classList.toggle('hidden',info.is_playlist);
+  // quality options
+  const hs=info.heights&&info.heights.length?info.heights:[2160,1440,1080,720,480,360,240,144];
+  const prev=saved.vHeight||'';
+  $('#vHeight').innerHTML='<option value="">Terbaik yang ada</option>'+hs.map(h=>`<option value="${h}">${label(h)}</option>`).join('');
+  if([...$('#vHeight').options].some(o=>o.value==prev)) $('#vHeight').value=prev;
+  $('#fmtCount').textContent=info.formats.length?'('+info.formats.length+')':'';
+  renderFormats(); updSummary();
+}
+function label(h){ return h>=4320?h+'p (8K)':h>=2160?h+'p (4K)':h>=1440?h+'p (2K)':h>=1080?h+'p (Full HD)':h>=720?h+'p (HD)':h+'p'; }
+
+// tabs
+function setMode(m,silent){ mode=m; $$('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.mode===m)); $('#optVideo').classList.toggle('hidden',m!=='video'); $('#optAudio').classList.toggle('hidden',m!=='audio');
+  if(manual && ((m==='audio')!==(manual.kind==='audio'))){ manual=null; updManual(); renderFormats(); }
+  if(!silent){persist();} updSummary(); }
+$$('.tabs button').forEach(b=>b.onclick=()=>setMode(b.dataset.mode));
+
+// formats table
+$$('#fTabs button').forEach(b=>b.onclick=()=>{ fKind=b.dataset.k; $$('#fTabs button').forEach(x=>x.classList.toggle('on',x===b)); renderFormats(); });
+function renderFormats(){
+  if(!info) return;
+  const fs=info.formats.filter(f=>fKind==='all'||f.kind===fKind).slice().reverse();
+  const tag={av:'<span class="tag av">V+A</span>',video:'<span class="tag">VIDEO</span>',audio:'<span class="tag a">AUDIO</span>'};
+  const cod=c=>c?esc(c.split('.')[0]):'<span class="muted">—</span>';
+  $('#fBody').innerHTML=fs.map(f=>`<tr data-id="${esc(f.id)}" class="${manual&&manual.id===f.id?'sel':''}">
+    <td><b>${esc(f.id)}</b></td><td>${tag[f.kind]}</td><td>${esc(f.ext)}</td><td>${esc(f.kind==='audio'?'—':f.res||'')}${f.hdr?' <span class="tag">'+esc(f.hdr)+'</span>':''}</td>
+    <td>${f.fps||''}</td><td>${cod(f.vcodec)}</td><td>${cod(f.acodec)}${f.channels>2?' '+f.channels+'ch':''}</td>
+    <td>${f.tbr?Math.round(f.tbr)+'k':f.abr?Math.round(f.abr)+'k':''}</td><td>${f.size?(f.approx?'~':'')+size(f.size):''}</td>
+    <td class="muted">${esc([f.note,f.lang,f.proto&&f.proto!=='https'?f.proto:''].filter(Boolean).join(' · '))}</td></tr>`).join('') || '<tr><td colspan="10" class="muted">Tidak ada format.</td></tr>';
+}
+$('#fBody').onclick=e=>{ const tr=e.target.closest('tr[data-id]'); if(!tr) return; const f=info.formats.find(x=>x.id===tr.dataset.id); if(!f) return;
+  if(manual&&manual.id===f.id){ manual=null; } else { manual=f; setMode(f.kind==='audio'?'audio':'video',true); }
+  updManual(); renderFormats(); updSummary(); };
+$('#manualClear').onclick=()=>{ manual=null; updManual(); renderFormats(); updSummary(); };
+function updManual(){ $('#manualPill').classList.toggle('hidden',!manual); if(manual) $('#manualId').textContent=manual.id+' · '+(manual.kind==='audio'?(manual.abr?Math.round(manual.abr)+'k ':'')+manual.ext:(manual.res||'')+' '+manual.ext); $('#vHeight').disabled=!!manual; }
+
+// audio notes
+const LOSSLESS=new Set(['flac','wav','alac']);
+function updSummary(){
+  const af=$('#aFmt').value; const lossless=LOSSLESS.has(af)||af==='best';
+  $('#aQualWrap').classList.toggle('hidden',lossless);
+  $('#aThumb').disabled=af==='wav'||af==='aac';
+  $('#aNote').textContent = LOSSLESS.has(af)?'Catatan: audio YouTube aslinya lossy (Opus/AAC ~128–160 kbps). FLAC/WAV/ALAC cuma ganti wadah, kualitasnya tidak naik, ukurannya yang membesar.'
+    : af==='best'?'Ambil audio asli tanpa konversi (biasanya .opus atau .m4a), paling cepat dan tanpa penurunan kualitas.'
+    : (af==='mp3'&&['320K','256K'].includes($('#aQual').value))?'Sumber YouTube maksimal ~160 kbps; 320 kbps aman untuk kompatibilitas, tapi kualitasnya tidak melebihi sumber.':'';
+  if(!info){ $('#summary').textContent=''; return; }
+  let s;
+  if(mode==='audio') s='→ '+(af==='best'?'audio asli':af.toUpperCase()+(lossless?'':' '+($('#aQual').selectedOptions[0].text)));
+  else s='→ '+($('#vCont').value.toUpperCase())+' · '+(manual?'format '+manual.id:($('#vHeight').value?$('#vHeight').value+'p':'kualitas terbaik'))+($('#vCodec').value?' · '+$('#vCodec').selectedOptions[0].text.split(' ')[0]:'');
+  if(info.is_playlist) s+=' · '+(($('#items').value.trim())||'semua '+info.count)+' item, hasilnya ZIP';
+  if($('#tStart').value||$('#tEnd').value) s+=' · dipotong';
+  $('#summary').textContent=s;
+}
+['#items','#tStart','#tEnd'].forEach(id=>$(id).addEventListener('input',updSummary));
+
+// download
+$('#dlBtn').onclick=async()=>{
+  if(!info) return;
+  const btn=$('#dlBtn'); btn.disabled=true; showErr($('#dlErr'),'');
+  const o={url:info.url||$('#url').value.trim(), title:info.title, thumb_url:info.thumbnail, mode, playlist:info.is_playlist,
+    items:$('#items').value, start:$('#tStart').value, end:$('#tEnd').value, subs:$('#subs').value, sub_langs:$('#subLangs').value,
+    auto_subs:$('#autoSubs').checked, precise_cut:$('#precise').checked, rate_limit:$('#rate').value,
+    sponsorblock:$$('#sbBox input:checked').map(c=>c.value)};
+  if(manual){ o.format_id=manual.id; o.format_kind=manual.kind; }
+  if(mode==='audio') Object.assign(o,{audio_format:$('#aFmt').value, audio_quality:$('#aQual').value, sample_rate:$('#aRate').value,
+    thumbnail:$('#aThumb').checked&&!$('#aThumb').disabled, metadata:$('#aMeta').checked, split_chapters:$('#aSplit').checked});
+  else Object.assign(o,{height:$('#vHeight').value, container:$('#vCont').value, vcodec:$('#vCodec').value, fps:$('#vFps').value,
+    metadata:$('#vMeta').checked, chapters:$('#vChap').checked, thumbnail:$('#vThumb').checked, recode:$('#vRecode').checked});
+  o.label=$('#summary').textContent.replace(/^→ /,'');
+  try{ await api('/api/download',o); poll(true); document.querySelector('.sec-h').scrollIntoView({behavior:'smooth',block:'start'}); }
+  catch(e){ showErr($('#dlErr'),e.message); }
+  finally{ btn.disabled=false; }
+};
+
+// jobs
+let timer=null, lastStatus={}, openLogs=new Set(), firstPoll=true;
+async function poll(now){
+  clearTimeout(timer);
+  let list=[];
+  try{ list=await api('/api/jobs'); }catch(e){ timer=setTimeout(poll,5000); return; }
+  renderJobs(list);
+  for(const j of list){ if(!firstPoll && lastStatus[j.id] && lastStatus[j.id]!=='done' && j.status==='done' && $('#autoSave').checked) saveFile(j.id); lastStatus[j.id]=j.status; }
+  firstPoll=false;
+  const active=list.some(j=>j.status==='running'||j.status==='queued');
+  timer=setTimeout(poll,active?1000:5000);
+}
+function saveFile(id){ const a=document.createElement('a'); a.href='/api/file/'+id; a.download=''; document.body.appendChild(a); a.click(); a.remove(); }
+const ST={queued:'Antre',running:'Berjalan',done:'Selesai',error:'Gagal',cancelled:'Dibatalkan'};
+function renderJobs(list){
+  const box=$('#jobs');
+  if(!list.length){ box.innerHTML='<div class="empty">Belum ada download.</div>'; return; }
+  box.innerHTML=list.map(j=>{
+    const pc=j.status==='done'?100:Math.max(0,Math.min(100,j.percent||0));
+    const bits=[`<span class="st ${j.status}">${ST[j.status]||j.status}</span>`];
+    if(j.status==='running'){ bits.push(esc(j.stage||'')); if(j.items) bits.push('item '+j.item+'/'+j.items); if(j.part>1) bits.push('bagian '+j.part);
+      if(j.stage==='Mengunduh') bits.push(pc.toFixed(1)+'%'); if(j.downloaded&&j.total) bits.push(size(j.downloaded)+' / '+size(j.total)); if(j.speed) bits.push(esc(j.speed)); if(j.eta) bits.push('sisa '+esc(j.eta)); }
+    if(j.status==='done'){ bits.push(esc(j.filename)); bits.push(size(j.size)); }
+    if(j.label) bits.push('<span>'+esc(j.label)+'</span>');
+    const acts=[];
+    if(j.status==='done') acts.push(`<a class="btn" href="/api/file/${j.id}" download>Simpan</a>`);
+    if(j.status==='running'||j.status==='queued') acts.push(`<button class="sm" data-act="cancel" data-id="${j.id}">Batal</button>`);
+    else acts.push(`<button class="sm" data-act="delete" data-id="${j.id}">Hapus</button>`);
+    if(j.status!=='queued') acts.push(`<button class="sm ghost" data-act="log" data-id="${j.id}">Log</button>`);
+    return `<div class="job ${j.status}"><img src="${esc(j.thumbnail||'')}" alt="" referrerpolicy="no-referrer" onerror="this.style.visibility='hidden'">
+      <div style="min-width:0"><div class="t" title="${esc(j.title)}">${esc(j.title)}</div><div class="s">${bits.join('<span>·</span>')}</div>
+      <div class="bar"><i style="width:${pc}%"></i></div>${j.error?`<div class="e">${esc(j.error)}</div>`:''}</div>
+      <div class="acts">${acts.join('')}</div>${openLogs.has(j.id)?`<pre class="log" id="log-${j.id}">memuat…</pre>`:''}</div>`;
+  }).join('');
+  openLogs.forEach(id=>loadLog(id));
+}
+async function loadLog(id){ try{ const r=await api('/api/jobs/'+id+'/log'); const el=$('#log-'+id); if(el) el.textContent=(r.log||[]).join('\n')||'(log tersedia setelah job selesai)'; }catch(e){} }
+$('#jobs').onclick=async e=>{ const b=e.target.closest('button[data-act]'); if(!b) return; const id=b.dataset.id;
+  if(b.dataset.act==='log'){ openLogs.has(id)?openLogs.delete(id):openLogs.add(id); poll(); return; }
+  try{ await api('/api/jobs/'+id+'/'+b.dataset.act,{}); }catch(err){ alert(err.message); } poll(); };
+$('#clearBtn').onclick=async()=>{ await api('/api/clear',{}).catch(()=>{}); poll(); };
+
+// footer
+api('/api/version').then(v=>{ $('#ver').textContent='yt-dlp '+(v.ytdlp||'?')+(v.cookies?' · cookies aktif':'');
+  if(v.public){ const L=v.limits||{}; $('#keep').textContent='Versi publik: maks '+L.active+' download sekaligus, video ≤ '+L.max_hours+' jam, file ≤ '+L.max_filesize+'B, playlist ≤ '+L.max_items+' item. Antrean kamu hanya terlihat di browser ini, file dihapus otomatis setelah '+v.keep_hours+' jam.'; }
+  else $('#keep').textContent='File disimpan di NAS '+v.keep_hours+' jam, lalu dihapus otomatis.';
+  $('#updBtn').classList.toggle('hidden',!v.can_update); }).catch(()=>{});
+$('#updBtn').onclick=async()=>{ const b=$('#updBtn'); b.disabled=true; b.innerHTML='<span class="spin"></span> Update…';
+  try{ const r=await api('/api/update',{}); $('#ver').textContent='yt-dlp '+(r.version||'?'); b.textContent=r.ok?'Sudah terbaru':'Gagal update'; }catch(e){ b.textContent='Gagal update'; } setTimeout(()=>{b.disabled=false;b.textContent='Update yt-dlp'},4000); };
+
+restoreOpts(); updSummary(); poll();
+const qp=new URLSearchParams(location.search).get('url'); if(qp){ $('#url').value=qp; $('#url').dispatchEvent(new Event('input')); getInfo(); }
+</script>
+</body>
+</html>
